@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "cluster-autoscaler.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "cluster-autoscaler.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "cluster-autoscaler.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      priorityClassName: system-cluster-critical
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ .Chart.Name }}
+      containers:
+        - image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+          name: {{ .Chart.Name }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          command:
+            - ./cluster-autoscaler
+            - --v=4
+            - --stderrthreshold=info
+            - --cloud-provider=aws
+            - --skip-nodes-with-local-storage=false
+            - --expander=least-waste
+            - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/k8s-monitor-os-eks-cluster
+            - --scan-interval=10s                     # Frequency that CA checks for any unschedulable pods and which nodes are unneeded. 
+            - --scale-down-utilization-threshold=0.5  # The maximum value between the sum of cpu requests and sum of memory requests of all pods running on the node divided by node's corresponding allocatable resource, below which a node can be considered for scale down. This value is a floating point number that can range between zero and one.
+            - --scale-down-delay-after-add=2m         # How long after scale out (added a node) that scale in evaluation resumes.
+            - --scale-down-delay-after-delete=2m      # How long after scale in (deleted a node) that scale in evaluation resumes.
+            - --scale-down-unneeded-time=2m           # How long a node should be unneeded before it is eligible for scale in.
+            - --skip-nodes-with-system-pods=false     # By default, cluster autoscaler will not terminate nodes running pods in the kube-system namespace. You can override this default behaviour by setting this parameter to false.
+          
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

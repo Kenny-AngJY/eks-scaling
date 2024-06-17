@@ -1,0 +1,10 @@
+### https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
+1. Validate that the Cluster Autoscaler is up and running:
+kubectl get deploy/cluster-autoscaler -n kube-system
+kubectl get pods -n kube-system
+
+2. Validate no "errors" in the cluster autoscaler's logs
+kubectl logs deploy/cluster-autoscaler -n kube-system
+
+3. Validate that the cluster autoscaler pods contain the AWS environment variables for IRSA
+kubectl get pod <cluster-autoscaler-pod-name> -n kube-system -oyaml | grep -i AWS

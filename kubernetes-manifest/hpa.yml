@@ -1,0 +1,51 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: php-apache
+  namespace: default
+spec:
+  # https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#default-behavior
+  # This entire behavior block contains the default parameters and values that resides in the kube-controller-manager.
+  # We do not need this entire block as it simply contains the default values. However, I included it here for clarity and better understanding.
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 120 # Default value is 300. Cooldown period to prevent it from scaling down too quickly (aka flapping).
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+      selectPolicy: Max
+
+  minReplicas: 1    # Minimum number of php-apache pods to maintain regardless of CPU utilisation.
+  maxReplicas: 10
+
+  # targetCPUUtilizationPercentage: 50
+
+  metrics:
+  - type: Resource # Resource | ContainerResource
+    resource:
+      name: cpu
+      target:
+        averageUtilization: 50
+        type: Utilization
+  # - type: ContainerResource
+  #   containerResource:
+  #     name: cpu
+  #     container: application
+  #     target:
+  #       type: Utilization
+  #       averageUtilization: 60
+
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
