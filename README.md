@@ -1,4 +1,5 @@
 ### Check out my article on "Scaling Strategies on AWS EKS: Understanding HPA, VPA, and Cluster Autoscaler"
+https://towardsaws.com/scaling-strategies-on-aws-eks-understanding-hpa-vpa-and-cluster-autoscaler-12b88758d1d5
 
 ![Pod vs Node resources](./images/pod_vs_node_resource.jpg?raw=true "Pod vs Node resources")
 <img src="./images/vertical_vs_horizontal.jpg" alt="Vertical vs Horizontal scaling" style="width:75%;">
