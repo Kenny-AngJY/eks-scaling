@@ -1,11 +1,11 @@
 locals {
-  name         = "k8s-monitor-os"
+  name         = "k8s-scaling"
   cluster_name = format("%s-%s", local.name, "eks-cluster")
 
   default_tags = {
     stack       = local.name
     terraform   = true
-    description = "Test scaling and monitoring on AWS EKS"
+    description = "Test scaling on AWS EKS"
   }
 }
 
