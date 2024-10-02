@@ -1,8 +1,8 @@
 module "eks" {
   source                                 = "terraform-aws-modules/eks/aws"
-  version                                = "20.22.0"
+  version                                = "20.24.2" # Published September 21, 2024
   cluster_name                           = local.cluster_name
-  cluster_version                        = "1.30"
+  cluster_version                        = "1.31"
   authentication_mode                    = "API"
   cluster_endpoint_public_access         = true
   cloudwatch_log_group_retention_in_days = 30
@@ -14,17 +14,18 @@ module "eks" {
   cluster_addons = {
     # coredns is deployed as a deployment.
     coredns = {
-      most_recent = true
+      # most_recent = true
+      addon_version = "v1.11.3-eksbuild.1"
     }
     # kube-proxy is deployed as a daemonset.
     kube-proxy = {
-      most_recent = true
+      addon_version = "v1.31.0-eksbuild.5"
     }
     # Network interface will show all IPs used in the subnet
     # kube-proxy pod (that is deployed as a daemonset) shares the same IPv4 address as the node it's on.
     # VPC-CNI creates elastic network interfaces and attaches them to your Amazon EC2 nodes. The add-on also assigns a private IPv4 or IPv6 address from your VPC to each Pod and service.
     vpc-cni = {
-      addon_version = "v1.18.3-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
+      addon_version = "v1.18.5-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
       service_account_role_arn = aws_iam_role.vpc_cni_iam_role.arn
       configuration_values = jsonencode(
         {
