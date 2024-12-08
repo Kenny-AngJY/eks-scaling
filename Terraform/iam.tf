@@ -24,7 +24,6 @@ resource "aws_iam_role" "clusterautoscaler-iam-role" {
     ]
   })
 
-  tags = local.default_tags
 }
 
 # https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#full-cluster-autoscaler-features-policy-recommended
@@ -106,7 +105,6 @@ resource "aws_iam_role" "amazon_EBS_CSI_iam_role" {
     ]
   })
 
-  tags = local.default_tags
 }
 
 resource "aws_iam_role_policy_attachment" "amazon_EBS_CSI_iam_role" {
@@ -140,7 +138,6 @@ resource "aws_iam_role" "vpc_cni_iam_role" {
     ]
   })
 
-  tags = local.default_tags
 }
 
 resource "aws_iam_role_policy_attachment" "vpc_cni_iam_role" {
