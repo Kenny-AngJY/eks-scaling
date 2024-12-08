@@ -25,18 +25,28 @@ module "eks" {
     # kube-proxy pod (that is deployed as a daemonset) shares the same IPv4 address as the node it's on.
     # VPC-CNI creates elastic network interfaces and attaches them to your Amazon EC2 nodes. The add-on also assigns a private IPv4 or IPv6 address from your VPC to each Pod and service.
     vpc-cni = {
-      addon_version = "v1.18.5-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
+      addon_version            = "v1.19.0-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
       service_account_role_arn = aws_iam_role.vpc_cni_iam_role.arn
       configuration_values = jsonencode(
         {
+          enableNetworkPolicy = "true"
           env = {
             # https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
             # kubectl get ds aws-node -n kube-system -o yaml
             WARM_IP_TARGET    = "3"
             MINIMUM_IP_TARGET = "3"
+            # ENABLE_NETWORK_POLICY_CONTROLLER = "true"
+            # NETWORK_POLICY_ENFORCING_MODE = "strict" # strict | standard
           }
         }
       )
+    }
+    /*
+    Creates a deployment (ebs-csi-controller) and daemonset (ebs-csi-node)
+    */
+    aws-ebs-csi-driver = {
+      addon_version            = "v1.35.0-eksbuild.1"
+      service_account_role_arn = aws_iam_role.amazon_EBS_CSI_iam_role.arn
     }
     # eks-pod-identity-agent = {}
   }
