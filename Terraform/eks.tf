@@ -27,11 +27,11 @@ module "eks" {
     # coredns is deployed as a deployment.
     coredns = {
       # most_recent = true
-      addon_version = "v1.11.3-eksbuild.1"
+      addon_version = "v1.11.3-eksbuild.2"
     }
     # kube-proxy pod (that is deployed as a daemonset) shares the same IPv4 address as the node it's on.
     kube-proxy = {
-      addon_version = "v1.31.0-eksbuild.5"
+      addon_version = "v1.31.2-eksbuild.3"
     }
     # Network interface will show all IPs used in the subnet
     # VPC-CNI creates elastic network interfaces and attaches them to your Amazon EC2 nodes. The add-on also assigns a private IPv4 or IPv6 address from your VPC to each Pod and service.
@@ -56,7 +56,7 @@ module "eks" {
     Creates a deployment (ebs-csi-controller) and daemonset (ebs-csi-node)
     */
     aws-ebs-csi-driver = {
-      addon_version            = "v1.35.0-eksbuild.1"
+      addon_version            = "v1.37.0-eksbuild.1"
       service_account_role_arn = aws_iam_role.amazon_EBS_CSI_iam_role.arn
     }
     # eks-pod-identity-agent = {}
