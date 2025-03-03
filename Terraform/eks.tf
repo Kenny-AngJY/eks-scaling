@@ -1,9 +1,9 @@
 module "eks" {
   source                                 = "terraform-aws-modules/eks/aws"
-  version                                = "20.30.0" # Published November 27, 2024
+  version                                = "20.33.0" # Published January 18, 2025
   create                                 = true
   cluster_name                           = local.cluster_name
-  cluster_version                        = "1.31"
+  cluster_version                        = "1.32"
   authentication_mode                    = "API"
   cluster_endpoint_private_access        = true # Indicates whether or not the Amazon EKS private API server endpoint is enabled
   cluster_endpoint_public_access         = true # Indicates whether or not the Amazon EKS public API server endpoint is enabled
@@ -27,16 +27,16 @@ module "eks" {
     # coredns is deployed as a deployment.
     coredns = {
       # most_recent = true
-      addon_version = "v1.11.3-eksbuild.2"
+      addon_version = "v1.11.4-eksbuild.2"
     }
     # kube-proxy pod (that is deployed as a daemonset) shares the same IPv4 address as the node it's on.
     kube-proxy = {
-      addon_version = "v1.31.2-eksbuild.3"
+      addon_version = "v1.32.0-eksbuild.2"
     }
     # Network interface will show all IPs used in the subnet
     # VPC-CNI creates elastic network interfaces and attaches them to your Amazon EC2 nodes. The add-on also assigns a private IPv4 or IPv6 address from your VPC to each Pod and service.
     vpc-cni = {
-      addon_version            = "v1.19.0-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
+      addon_version            = "v1.19.3-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
       service_account_role_arn = aws_iam_role.vpc_cni_iam_role.arn
       configuration_values = jsonencode(
         {
@@ -56,7 +56,7 @@ module "eks" {
     Creates a deployment (ebs-csi-controller) and daemonset (ebs-csi-node)
     */
     aws-ebs-csi-driver = {
-      addon_version            = "v1.37.0-eksbuild.1"
+      addon_version            = "v1.40.0-eksbuild.1"
       service_account_role_arn = aws_iam_role.amazon_EBS_CSI_iam_role.arn
     }
     # eks-pod-identity-agent = {}
@@ -90,6 +90,18 @@ module "eks" {
     # t3.xlarge: 4 vCPU, 16GiB
 
     # iam_role_additional_policies = ["arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"]
+    update_config = {
+      max_unavailable_percentage = 50
+      # max_unavailable = 2
+    }
+
+    block_device_mappings = [{
+      device_name = "/dev/xvda"
+      ebs = {
+        encrypted   = true
+        volume_type = "gp3"
+      }
+    }]
   }
 
   eks_managed_node_groups = {
@@ -100,8 +112,7 @@ module "eks" {
       max_size     = 2
       desired_size = 1
 
-      instance_types = ["t3.large", "t3.medium"]
-      capacity_type  = "SPOT"
+      capacity_type = "SPOT"
     }
   }
 
