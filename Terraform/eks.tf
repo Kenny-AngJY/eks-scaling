@@ -3,7 +3,7 @@ module "eks" {
   version                                = "20.33.0" # Published January 18, 2025
   create                                 = true
   cluster_name                           = local.cluster_name
-  cluster_version                        = "1.32"
+  cluster_version                        = "1.33"
   authentication_mode                    = "API"
   cluster_endpoint_private_access        = true # Indicates whether or not the Amazon EKS private API server endpoint is enabled
   cluster_endpoint_public_access         = true # Indicates whether or not the Amazon EKS public API server endpoint is enabled
@@ -27,16 +27,16 @@ module "eks" {
     # coredns is deployed as a deployment.
     coredns = {
       # most_recent = true
-      addon_version = "v1.11.4-eksbuild.2"
+      addon_version = "v1.12.1-eksbuild.2"
     }
     # kube-proxy pod (that is deployed as a daemonset) shares the same IPv4 address as the node it's on.
     kube-proxy = {
-      addon_version = "v1.32.0-eksbuild.2"
+      addon_version = "v1.33.0-eksbuild.2"
     }
     # Network interface will show all IPs used in the subnet
     # VPC-CNI creates elastic network interfaces and attaches them to your Amazon EC2 nodes. The add-on also assigns a private IPv4 or IPv6 address from your VPC to each Pod and service.
     vpc-cni = {
-      addon_version            = "v1.19.3-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
+      addon_version            = "v1.19.5-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
       service_account_role_arn = aws_iam_role.vpc_cni_iam_role.arn
       configuration_values = jsonencode(
         {
@@ -56,7 +56,7 @@ module "eks" {
     Creates a deployment (ebs-csi-controller) and daemonset (ebs-csi-node)
     */
     aws-ebs-csi-driver = {
-      addon_version            = "v1.40.0-eksbuild.1"
+      addon_version            = "v1.44.0-eksbuild.1"
       service_account_role_arn = aws_iam_role.amazon_EBS_CSI_iam_role.arn
     }
     # eks-pod-identity-agent = {}
