@@ -1,42 +1,35 @@
 module "eks" {
   source                                 = "terraform-aws-modules/eks/aws"
-  version                                = "20.33.0" # Published January 18, 2025
+  version                                = "21.18.0" # Published April 13, 2026
   create                                 = true
-  cluster_name                           = local.cluster_name
-  cluster_version                        = "1.33"
+  name                                   = local.cluster_name
+  kubernetes_version                     = "1.35"
   authentication_mode                    = "API"
-  cluster_endpoint_private_access        = true # Indicates whether or not the Amazon EKS private API server endpoint is enabled
-  cluster_endpoint_public_access         = true # Indicates whether or not the Amazon EKS public API server endpoint is enabled
+  endpoint_private_access                = true # Indicates whether or not the Amazon EKS private API server endpoint is enabled
+  endpoint_public_access                 = true # Indicates whether or not the Amazon EKS public API server endpoint is enabled
+  endpoint_public_access_cidrs           = ["0.0.0.0/0"]
   cloudwatch_log_group_retention_in_days = 30
   create_kms_key                         = var.create_kms_key
   enable_irsa                            = true # Determines whether to create an OpenID Connect Provider for EKS to enable IRSA
 
-  /* -----------------------------------------------------------------------------------
-  Install default unmanaged add-ons, such as aws-cni, kube-proxy, and CoreDNS during cluster creation. 
-  If false, you must manually install desired add-ons (via the console, especially the Amazon VPC CNI add-on), 
-  else even though your worker nodes will join the cluster, it will fail to be ready, showing the error:
-  "container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
-  
-  Changing this value will force a new cluster to be created.
-  ----------------------------------------------------------------------------------- */
-  bootstrap_self_managed_addons = true
+  encryption_config = {}
 
-  cluster_encryption_config = {}
-
-  cluster_addons = {
+  addons = {
     # coredns is deployed as a deployment.
     coredns = {
       # most_recent = true
-      addon_version = "v1.12.1-eksbuild.2"
+      addon_version  = "v1.13.2-eksbuild.4"
     }
     # kube-proxy pod (that is deployed as a daemonset) shares the same IPv4 address as the node it's on.
     kube-proxy = {
-      addon_version = "v1.33.0-eksbuild.2"
+      before_compute = true
+      addon_version  = "v1.35.3-eksbuild.2"
     }
     # Network interface will show all IPs used in the subnet
     # VPC-CNI creates elastic network interfaces and attaches them to your Amazon EC2 nodes. The add-on also assigns a private IPv4 or IPv6 address from your VPC to each Pod and service.
     vpc-cni = {
-      addon_version            = "v1.19.5-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
+      before_compute           = true
+      addon_version            = "v1.21.1-eksbuild.7" # major-version.minor-version.patch-version-eksbuild.build-number.
       service_account_role_arn = aws_iam_role.vpc_cni_iam_role.arn
       configuration_values = jsonencode(
         {
@@ -56,7 +49,7 @@ module "eks" {
     Creates a deployment (ebs-csi-controller) and daemonset (ebs-csi-node)
     */
     aws-ebs-csi-driver = {
-      addon_version            = "v1.44.0-eksbuild.1"
+      addon_version            = "v1.58.0-eksbuild.1"
       service_account_role_arn = aws_iam_role.amazon_EBS_CSI_iam_role.arn
     }
     # eks-pod-identity-agent = {}
@@ -83,38 +76,18 @@ module "eks" {
   T3 instances offer a balance of compute, memory, and network resources and are 
   designed for applications with moderate CPU usage that experience temporary spikes in use.
   */
-  eks_managed_node_group_defaults = {
-    instance_types = ["t3.medium", "t3.large"]
-    # t3.medium: 2 vCPU, 4GiB
-    # t3.large: 2 vCPU, 8GiB
-    # t3.xlarge: 4 vCPU, 16GiB
-
-    # iam_role_additional_policies = ["arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"]
-    update_config = {
-      max_unavailable_percentage = 50
-      # max_unavailable = 2
-    }
-
-    block_device_mappings = [{
-      device_name = "/dev/xvda"
-      ebs = {
-        encrypted   = true
-        volume_type = "gp3"
-      }
-    }]
-  }
-
   eks_managed_node_groups = {
     node_group_1 = {
-      ### Starting on 1.30, AL2023 is the default AMI type for EKS managed node groups
-      # ami_type       = "AL2023_x86_64_STANDARD"
+      # Starting on 1.30, AL2023 is the default AMI type for EKS managed node groups
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = ["t3.medium", "t3.large"]
+      # t3.medium: 2 vCPU, 4GiB
+      # t3.large: 2 vCPU, 8GiB
+      # t3.xlarge: 4 vCPU, 16GiB
+
       min_size     = 1
       max_size     = 2
       desired_size = 1
-
-      capacity_type = "SPOT"
-    }
-  }
 
   # Cluster access entry
   # To add the current caller identity as an administrator
